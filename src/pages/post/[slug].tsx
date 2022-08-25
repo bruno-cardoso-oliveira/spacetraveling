@@ -1,4 +1,5 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import Header from '../../components/Header';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -26,20 +27,42 @@ interface PostProps {
   post: Post;
 }
 
-// export default function Post() {
-//   // TODO
-// }
+export default function Post() {
+  return (
+    <>
+      <Header />
+    </>
+  )
+}
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient({});
-//   const posts = await prismic.getByType(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient({});
+  const posts = await prismic.getByType('posts');
 
-//   // TODO
-// };
+  const paths = posts.results.map(post => {
+    return {
+      params: {
+        slug: post.uid,
+      }
+    }
+  })
 
-// export const getStaticProps = async ({params }) => {
-//   const prismic = getPrismicClient({});
-//   const response = await prismic.getByUID(TODO);
+  return {
+    paths,
+    fallback: true,
+  }
 
-//   // TODO
-// };
+ };
+
+export const getStaticProps: GetStaticProps = async ({params }) => {
+  const { slug } = params;
+  const prismic = getPrismicClient({});
+  const response = await prismic.getByUID('posts', String(slug));
+
+  return {
+    props: {
+      post: response,
+    },
+    revalidate: 1800 // 30 minutos -> como se trata do getStaticProps e ele é estático, a cada intervalo definido o next irá verificar se o post teve alguma alteração
+  }
+};
